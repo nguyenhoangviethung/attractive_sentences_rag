@@ -1,0 +1,14 @@
+venv/
+.env
+
+Images/
+output/
+output_gray/
+
+__pycache__/
+*.pyc
+
+final_result.json
+ocr_results.json
+
+.vscode/
