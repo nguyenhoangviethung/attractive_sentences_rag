@@ -29,7 +29,6 @@ class Filter:
     @staticmethod
     def filter(BLOCKED_KEYWORDS, REMOVED_KEYWORDS, jsonArray):
         results = []
-        index = 1
         try:
             for item in jsonArray:
                 text = item.get('text')
@@ -61,12 +60,7 @@ class Filter:
                             "text": text
                         })
                     else:
-                        result.append({
-                            "keyword": "@",
-                            "text": text
-                        }
-                        )
-                    index += 1
+                        continue
                 else:
                     continue
         except Exception as e:
@@ -77,7 +71,6 @@ class Filter:
     @staticmethod
     def simple_filter(jsonArray):
         results = []
-        index = 1
         try:
             for item in jsonArray:
                 text = item.get("text")
@@ -100,12 +93,8 @@ class Filter:
                                 "text": pair
                             })
                     else:
-                        results.append({
-                            "keyword": "@",
-                            "text": text
-                        }
-                        )
-                    index += 1
+                        continue
+
                 else:
                     continue
         except Exception as e:

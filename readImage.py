@@ -111,7 +111,8 @@ def process_supervised_images(config, model_name='gemini-2.0-flash'):
                 print(f'{index}:  {img.shape}')
                 text = gemini_model.extract_text_from_image(
                     img_path,
-                    prompt = """Nhận diện văn bản trong bức ảnh theo ngôn ngữ tiếng Việt (chỉ cần văn bản trong ảnh không cần dài dòng gì khác)
+                    prompt = """Nhận diện văn bản trong bức ảnh theo ngôn ngữ tiếng Việt (chỉ cần văn bản trong ảnh không cần dài dòng gì khác).
+                    Nếu có dòng bị xuống dòng sai (ví dụ như đang trong cùng một câu mà bị ngắt dòng), hãy tự động nối dòng đó lại để đảm bảo văn bản liền mạch và có nghĩa.
                     Trả lời theo format:
                     Văn bản trong ảnh:<văn bản>"""
                 )
