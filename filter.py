@@ -19,6 +19,11 @@ class Filter:
         text = re.sub(r'[^\S\r\n]+', ' ', text).strip()
         text = re.sub(r'\n+', '\n', text)
         text = re.sub(r'\n?"{2,}\n?', '', text)
+        text = re.sub(r'\n+\.', '.', text)
+        text = re.sub(r'\n{2,}', '\n', text)   
+        text = re.sub(r'^\.+', '', text)
+        text = re.sub(r'(^|\.\s*|\n)thả thính[\s:,-]*\n?', r'\1', text, flags=re.IGNORECASE)
+        text = text.strip(" \n")
         return text
 
     @staticmethod
@@ -28,33 +33,82 @@ class Filter:
         try:
             for item in jsonArray:
                 text = item.get('text')
-                text = text.lower()
-                if Filter.contain(text, 'văn bản'):
-                    if Filter.contain(text,':'):
-                        text = text.split(':')[1]
-                    else:
+                if len(text.split(':')) == 3:
+                    keyword = []
+                    text = text.lower()
+
+                    if Filter.contain(text, 'văn bản'):
+                        if Filter.contain(text,':'):
+                            pre = text.split(':')[2]
+                            keyword = pre.split('*')
+                            keyword = [k.strip() for k in keyword if k.strip()]
+                            keyword = [k.strip() for k in keyword if k.strip().lower() != "thả thính"]
+                            text = text.split(':')[1]
+                        else:
+                            continue
+                    
+                    for kw in REMOVED_KEYWORDS:
+                        text = text.replace(kw, '')
+
+                    text = Filter.clean_text(text)
+                    
+                    if len(text) < 25 or Filter.contains_blocked_keywords(text, BLOCKED_KEYWORDS):
                         continue
-                if len(text) < 25 or Filter.contains_blocked_keywords(text, BLOCKED_KEYWORDS):
-                    print(text)
-                    print('----------------------------------------------------')
+                  
+                    if keyword:
+                        results.append({
+                            "keyword": keyword,
+                            "text": text
+                        })
+                    else:
+                        result.append({
+                            "keyword": "@",
+                            "text": text
+                        }
+                        )
+                    index += 1
+                else:
                     continue
-                if Filter.contain(text, 'văn bản'):
-                    continue
-                for keyword in REMOVED_KEYWORDS:
-                    text = text.replace(keyword, '')
-                text = re.sub(r'\n\s*\n+', '\n', text)
-                
-                results.append({
-                    "stt": index,
-                    "text": text
-                })
-                index += 1
         except Exception as e:
             print(e)
             results = []
         return results
 
-    # with open(results_path, "w", encoding="utf-8") as json_file:
-    #     json.dump(results, json_file, ensure_ascii=False, indent=4)
+    @staticmethod
+    def simple_filter(jsonArray):
+        results = []
+        index = 1
+        try:
+            for item in jsonArray:
+                text = item.get("text")
+                if len(text.split(':')) == 2:
+                    keyword = []
+                    text = text.lower()
+                    text = text.replace("ghi chú","")
+                    text.strip()
+                    supertext = text.split('\n')
+                    for pair in supertext:
+                        if len(pair.split("=")) == 2:
+                            pre = pair.split("=")[0]
+                            keyword = pre.split()
+                        else:
+                            continue
 
-    # print(f"Kết quả đã được lưu vào {results_path}")
+                        if keyword:
+                            results.append({
+                                "keyword": keyword,
+                                "text": pair
+                            })
+                    else:
+                        results.append({
+                            "keyword": "@",
+                            "text": text
+                        }
+                        )
+                    index += 1
+                else:
+                    continue
+        except Exception as e:
+            print(e)
+            results = []
+        return results

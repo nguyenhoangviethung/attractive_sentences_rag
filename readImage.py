@@ -1,81 +1,147 @@
-import cv2
-import os
-import json
-import time
+import cv2, os, json, time
 from dotenv import load_dotenv
 from api_call import GeminiModel
 from filter import Filter
 
-# Load environment variables
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
-BLOCKED_KEYWORDS = os.getenv("BLOCKED_KEYWORDS").split(",")
-REMOVED_KEYWORDS = os.getenv("REMOVED_KEYWORDS").split(",")
-FOLDER_PATH = os.getenv("FOLDER_PATH")
-OUTPUT_FOLDER = os.getenv("OUTPUT_FOLDER")
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+def process_unsupervised_images(config, model_name = 'gemini-2.0-flash'):
+    API_KEY = config["API_KEY"]
+    BLOCKED_KEYWORDS = config["BLOCKED_KEYWORDS"]
+    REMOVED_KEYWORDS = config["REMOVED_KEYWORDS"]
+    FOLDER_PATH_UNSUPERVISE = config["FOLDER_PATH_UNSUPERVISE"]
+    OUTPUT_JSON_PATH = config["OUTPUT_JSON_PATH"]
 
-index = 1
-start_index = 1
-results = []
-processed_images = []
-output_json_path = "ocr_results.json"
+    gemini_model = GeminiModel(model_name, api_key = API_KEY)
 
-if os.path.exists(output_json_path):
-    with open(output_json_path, "r", encoding="utf-8") as f:
-        try:
-            results = json.load(f)
-            start_index = results[-1]["stt"] + 1
-        except Exception as e:
-            print("Lỗi đọc file JSON:", e)
-            results = []
-print(len(results))
-gemini_model = GeminiModel(api_key=API_KEY)
+    index = 1
+    start_index = 1
+    results = []
 
-try:
-    for file_name in os.listdir(FOLDER_PATH):
-        if index < start_index:
-            index += 1
-            continue
-        if file_name.endswith((".jpg", ".png", ".jpeg")):
-            img_path = os.path.join(FOLDER_PATH, file_name)
-            img = cv2.imread(img_path)
-            print(f'{index}:  {img.shape}')
-            if img is None or img.shape[0] == 0:
-                print(f"Bỏ qua ảnh lỗi: {file_name}")
+    if os.path.exists(OUTPUT_JSON_PATH):
+        with open(OUTPUT_JSON_PATH, "r", encoding="utf-8") as f:
+            try:
+                results = json.load(f)
+                start_index = results[-1]["stt"] + 1
+            except Exception as e:
+                print("Lỗi đọc file JSON:", e)
+                results = []
+
+    try:
+        files = sorted(
+            os.listdir(FOLDER_PATH_UNSUPERVISE),
+            key=lambda x: os.path.getmtime(os.path.join(FOLDER_PATH_UNSUPERVISE, x))
+        )
+        for file_name in files:
+            if index < start_index:
+                index += 1
                 continue
-            
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            _, thresholded = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
-            output_img_path = os.path.join(OUTPUT_FOLDER, f'output_gray{index}.jpg')
-            cv2.imwrite(output_img_path, thresholded)
-            
-            text = gemini_model.extract_text_from_image(output_img_path)
-            if text is None:
-                print("Hết API hoặc lỗi xảy ra. Lưu kết quả và thoát...")
-                break
-            
-            # Clean the extracted text
-            text = Filter.clean_text(text)
-            if len(text) == 0:
+
+            if file_name.endswith((".jpg", ".png", ".jpeg")):
+                img_path = os.path.join(FOLDER_PATH_UNSUPERVISE, file_name)
+                img = cv2.imread(img_path)
+                if img is None or img.shape[0] == 0:
+                    print(f"Bỏ qua ảnh lỗi: {file_name}")
+                    continue
+
+                print(f'{index}:  {img.shape}')
+                text = gemini_model.extract_text_from_image(img_path)
+                if text is None:
+                    print("Hết API hoặc lỗi xảy ra. Lưu kết quả và thoát...")
+                    break
+
+                text = Filter.clean_text(text)
+                if len(text) == 0:
+                    continue
+
+                print(text)
+                results.append({"stt": index, "text": text})
+                index += 1
+                time.sleep(2)
+
+    except Exception as e:
+        print("Lỗi trong quá trình xử lý:", e)
+
+    finally:
+        with open(OUTPUT_JSON_PATH, "w", encoding="utf-8") as json_file:
+            json.dump(results, json_file, ensure_ascii=False, indent=4)
+
+        results = Filter.filter(BLOCKED_KEYWORDS, REMOVED_KEYWORDS, results)
+
+        with open('data/final_result.json', "w", encoding="utf-8") as json_file:
+            json.dump(results, json_file, ensure_ascii=False, indent=4)
+
+        print(f"Kết quả đã được lưu vào 'data/final_result.json'")
+        return results
+
+def process_supervised_images(config, model_name='gemini-2.0-flash'):
+    API_KEY = config["API_KEY"]
+    FOLDER_PATH_SUPERVISE = config["FOLDER_PATH_SUPERVISE"]
+    OUTPUT_JSON_PATH = config["OUTPUT_JSON_PATH"]
+    OUTPUT_TEMP_PATH = config["OUTPUT_TEMP_PATH"]
+    gemini_model = GeminiModel(model_name, api_key = API_KEY)
+
+    index = 1
+    start_index = 1
+    results = []
+
+    if os.path.exists(OUTPUT_TEMP_PATH):
+        with open(OUTPUT_TEMP_PATH, "r", encoding="utf-8") as f:
+            try:
+                results = json.load(f)
+                start_index = results[-1]["stt"] + 1
+            except Exception as e:
+                print("Lỗi đọc file JSON:", e)
+                results = []
+    try:
+        files = sorted(
+            os.listdir(FOLDER_PATH_SUPERVISE),
+            key = lambda x : os.path.getmtime(os.path.join(FOLDER_PATH_SUPERVISE,x))
+        )
+        for file_name in files:
+            if index < start_index:
+                index += 1
                 continue
-            
-            print(text)
-            results.append({"stt": index, "text": text})
-            processed_images.append(output_img_path)
-            index += 1
-            time.sleep(1) 
 
-except Exception as e:
-    print("Lỗi trong quá trình xử lý:", e)
+            if file_name.endswith((".jpg", ".png", ".jpeg")):
+                img_path = os.path.join(FOLDER_PATH_SUPERVISE, file_name)
+                img = cv2.imread(img_path)
+                if img is None or img.shape[0] == 0:
+                    print(f"Bỏ qua ảnh lỗi: {file_name}")
+                    continue
 
-finally:
-    with open(output_json_path, "w", encoding="utf-8") as json_file: 
-        json.dump(results, json_file, ensure_ascii=False, indent=4)
+                print(f'{index}:  {img.shape}')
+                text = gemini_model.extract_text_from_image(
+                    img_path,
+                    prompt = """Nhận diện văn bản trong bức ảnh theo ngôn ngữ tiếng Việt (chỉ cần văn bản trong ảnh không cần dài dòng gì khác)
+                    Trả lời theo format:
+                    Văn bản trong ảnh:<văn bản>"""
+                )
+                if text is None:
+                    print("Hết API hoặc lỗi xảy ra. Lưu kết quả và thoát...")
+                    break
 
-    results = Filter.filter(BLOCKED_KEYWORDS, REMOVED_KEYWORDS, results)
+                text = Filter.clean_text(text)
+                if len(text) == 0:
+                    continue
 
-    with open('final_result.json', "w", encoding="utf-8") as json_file: 
-        json.dump(results, json_file, ensure_ascii=False, indent=4)
+                print(text)
+                results.append({"stt": index, "text": text})
+                index += 1
+                time.sleep(2)
 
-    print(f"Kết quả đã được lưu vào 'final_result.json'")
+    except Exception as e:
+        print("Lỗi trong quá trình xử lý:", e)
+
+    finally:
+        with open(OUTPUT_TEMP_PATH, "w", encoding="utf-8") as json_file:
+            json.dump(results, json_file, ensure_ascii=False, indent=4)
+
+        results = Filter.simple_filter(results)
+
+        with open('data/final1_result.json', "w", encoding="utf-8") as json_file:
+            json.dump(results, json_file, ensure_ascii=False, indent=4)
+
+        print(f"Kết quả đã được lưu vào 'data/output_temp.json'")
+        return results
+if __name__ == "__main__":
+    process_unsupervised_images()
+    process_supervised_images()

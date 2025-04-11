@@ -1,14 +1,14 @@
 venv/
 .env
 
-Images/
+Images_Unsupervise/
+Images_Supervise/
 output/
-output_gray/
+input_gray/
 
 __pycache__/
 *.pyc
 
-final_result.json
-ocr_results.json
+data/
 
 .vscode/
