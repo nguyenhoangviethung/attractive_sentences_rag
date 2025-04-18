@@ -5,6 +5,19 @@ from database.model import SentenceData
 def create_app(CONFIG):
     app = Flask(__name__)
     db = connect_db(CONFIG)
+    pipeline = [
+            {"$group": {"_id": "$text", "dups": {"$addToSet": "$_id"}, "count": {"$sum": 1}}},
+            {"$match": {"count": {"$gt": 1}}}
+        ]
+
+    duplicates = list(db.sentences.aggregate(pipeline))
+    for doc in duplicates:
+        ids_to_delete = doc["dups"][1:]
+        db.sentences.delete_many({"_id": {"$in": ids_to_delete}})
+    try:
+        db.sentences.create_index("text", unique = True)
+    except:
+        pass
     @app.route('/')
     def index():
         return "Hello world"
@@ -12,11 +25,16 @@ def create_app(CONFIG):
     @app.post('/add-sentence')
     def add_sentence():
         data = request.json
+        data['text'] = data['text'].strip()
         sentecce = SentenceData.from_dict(data)
-        db.sentences.insert_one(sentecce.to_dict())
-        return jsonify({
-            "message": "Sentence added"
-        })
+        try:
+            db.sentences.insert_one(sentecce.to_dict())
+        except:
+            pass
+        finally:
+            return jsonify({
+                "message": "Sentence added"
+            })
     
     @app.get('/sentences')
     def get_sentences():
@@ -30,10 +48,14 @@ def create_app(CONFIG):
         unsupervised = process_unsupervised_images(config = CONFIG, model_name='gemini-2.0-flash')
         supervised = process_supervised_images(config = CONFIG,model_name='gemini-2.0')
         results = unsupervised + supervised
-        documents = [SentenceData(item["keyword"], item["text"]).to_dict() for item in results] 
 
-        db.sentences.insert_many(documents)
-        return jsonify({
-            "message": "Sentences added"
-        })
+        try:
+            documents = [SentenceData(item["keyword"], item["text"]).to_dict() for item in results]
+            db.sentences.insert_many(documents, ordered = False)
+        except:
+            pass
+        finally:
+            return jsonify({
+                "message": "Sentences added"
+            })
     return app
