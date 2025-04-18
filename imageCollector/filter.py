@@ -54,10 +54,10 @@ class Filter:
                     if len(text) < 25 or Filter.contains_blocked_keywords(text, BLOCKED_KEYWORDS):
                         continue
                   
-                    if keyword:
+                    if keyword and len(text) < 180:
                         results.append({
                             "keyword": keyword,
-                            "text": text
+                            "text": text,
                         })
                     else:
                         continue
@@ -87,10 +87,10 @@ class Filter:
                         else:
                             continue
 
-                        if keyword:
+                        if keyword and len(pair) < 180:
                             results.append({
                                 "keyword": keyword,
-                                "text": pair
+                                "text": pair,
                             })
                     else:
                         continue

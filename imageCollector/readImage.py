@@ -1,7 +1,7 @@
 import cv2, os, json, time
 from dotenv import load_dotenv
-from api_call import GeminiModel
-from filter import Filter
+from .api_call import GeminiModel
+from .filter import Filter
 
 def process_unsupervised_images(config, model_name = 'gemini-2.0-flash'):
     API_KEY = config["API_KEY"]
