@@ -11,7 +11,11 @@ def load_config():
         "FOLDER_PATH_SUPERVISE" : os.getenv("FOLDER_PATH_SUPERVISE"),
         "OUTPUT_JSON_PATH" : os.getenv("OUTPUT_JSON_PATH"),
         "OUTPUT_TEMP_PATH" : os.getenv("OUTPUT_TEMP_PATH"),
-        "MONGODB_SERVER" : os.getenv("MONGODB_SERVER")
+        "MONGODB_SERVER" : os.getenv("MONGODB_SERVER"),
+        "CLOUD_NAME": os.getenv("CLOUD_NAME"),
+        "API_SECRET": os.getenv("API_SECRET"),
+        "API_KEY": os.getenv("API_KEY"),
+        "API_ENVIRONMENT_VARIABLE": os.getenv("API_ENVIRONMENT_VARIABLE")
     }
     
 
