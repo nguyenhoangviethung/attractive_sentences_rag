@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 def load_config():
     load_dotenv()
     return {
-        "API_KEY" : os.getenv("API_KEY"),
+        "API_KEY_GEMINI" : os.getenv("API_KEY_GEMINI"),
         "BLOCKED_KEYWORDS" : os.getenv("BLOCKED_KEYWORDS").split(","),
         "REMOVED_KEYWORDS" : os.getenv("REMOVED_KEYWORDS").split(","),
         "FOLDER_PATH_UNSUPERVISE" : os.getenv("FOLDER_PATH_UNSUPERVISE"),
