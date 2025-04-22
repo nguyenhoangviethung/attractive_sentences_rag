@@ -9,6 +9,8 @@ def load_config():
         "REMOVED_KEYWORDS" : os.getenv("REMOVED_KEYWORDS").split(","),
         "FOLDER_PATH_UNSUPERVISE" : os.getenv("FOLDER_PATH_UNSUPERVISE"),
         "FOLDER_PATH_SUPERVISE" : os.getenv("FOLDER_PATH_SUPERVISE"),
+        "FOLDER_CLOUD_UNSUPERVISE" : os.getenv("FOLDER_CLOUD_UNSUPERVISE"),
+        "FOLDER_CLOUD_SUPERVISE" : os.getenv("FOLDER_CLOUD_SUPERVISE"),
         "OUTPUT_JSON_PATH" : os.getenv("OUTPUT_JSON_PATH"),
         "OUTPUT_TEMP_PATH" : os.getenv("OUTPUT_TEMP_PATH"),
         "MONGODB_SERVER" : os.getenv("MONGODB_SERVER"),
