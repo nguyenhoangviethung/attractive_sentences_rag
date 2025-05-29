@@ -5,6 +5,8 @@ from database import connect_db
 from config import load_config
 from pymongo.errors import BulkWriteError
 from service import cloudinary_service as cs
+from utilities.middleware import MiddleWare as MW
+
 CONFIG = load_config()
 
 db = connect_db(CONFIG)
@@ -17,12 +19,16 @@ def get_config():
     else:
         return 1, 1
 
-def add_sentence(data):
+@MW.check_permission
+def add_sentence(data, is_authorized = None):
     try:
         data['text'] = data['text'].strip()
         sentence = SentenceData.from_dict(data)
-        db.sentences.insert_one(sentence.to_dict())
         
+        if is_authorized:
+            db.sentences.insert_one(sentence.to_dict())
+        else:
+            db.temp.insert_one(sentence.to_dict())
         return jsonify({
             "message": "Sentence added"
         }), 202
