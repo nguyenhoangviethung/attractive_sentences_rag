@@ -126,3 +126,33 @@ def pre_data(is_authorized):
             return jsonify({"message": "Sentences added"}), 200
         print(e)
         return jsonify({"message": "Sentence isn't added"}), 500
+
+@MW.check_permission
+def approve_text(data, is_authorized=None):
+    if not is_authorized:
+        return jsonify({"message": "Have not permission"}), 401
+    
+    try:
+        text = data.get("text")
+        keyword = data.get("keyword")
+        if not text or not keyword:
+            return jsonify({"message": "Missing text or keyword"}), 400
+        
+        response, status = add_sentence(data)
+        
+        if status != 202:
+            return jsonify({"message": "Failed to add sentence during approval"}), 500
+        
+        delete_result = db.temp.delete_one({
+            "text": text.strip(),
+            "keyword": keyword
+        })
+
+        if delete_result.deleted_count == 0:
+            return jsonify({"message": "Sentence approved but not found in temp"}), 206
+        
+        return jsonify({"message": "Sentence approved and moved"}), 200
+
+    except Exception as e:
+        print("Approve text failed:", e)
+        return jsonify({"message": "Failed to approve sentence"}), 500

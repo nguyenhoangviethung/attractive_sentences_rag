@@ -26,3 +26,9 @@ def get_sentences():
 def pre_data():
     res, status = ms.pre_data()
     return res, status
+
+@mongoDB_bp.post('/approve')
+def approve():
+    data = request.json
+    res, status = ms.approve_text(data)
+    return res, status
