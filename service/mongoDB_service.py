@@ -1,3 +1,4 @@
+import os
 from flask import jsonify
 import cloudinary
 from database.model import SentenceData, ConfigData

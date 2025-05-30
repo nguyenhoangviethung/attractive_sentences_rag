@@ -54,7 +54,7 @@ def init_chatbot(service, folder_id):
     embedder = SentenceTransformer("keepitreal/vietnamese-sbert")
     return mapping, index, embedder
 
-def query_rag(data, top_k=3, threshold=200.0):
+def query_rag(data, top_k=20, threshold=200.0):
     try:
         service = du.authenticate()
         user_input = data["text"]
