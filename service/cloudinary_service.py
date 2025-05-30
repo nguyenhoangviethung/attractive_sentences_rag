@@ -4,9 +4,21 @@ from utilities.utility import Utilities as Ut
 import cloudinary.uploader as cu
 import cloudinary.api as ca
 import cloudinary
+from database import connect_db
+from config import load_config
+from utilities.middleware import MiddleWare as MW
+CONFIG = load_config()
 
-def upload_image(data, folder = "temp"):
+db = connect_db(CONFIG)
+
+@MW.check_permission
+def upload_image(data, is_authorized = None):
     try:
+        folder = ""
+        if is_authorized:
+            folder = "Images_Unsupervise"
+        else:
+            folder = "Temp"
         path = data["path"]
         result = cu.upload(
             path,
@@ -26,7 +38,7 @@ def upload_image(data, folder = "temp"):
             "message": "upload image failure"
         }), 500
 
-def download_image(url, filename = 'download.jpg'):
+def download_image(url, filename = 'download.jpg', is_authorized = None):
     try:
         response = requests.get(url)
         with open(filename, 'wb') as f:
@@ -35,7 +47,7 @@ def download_image(url, filename = 'download.jpg'):
     except Exception as e:
         raise e
 
-def get_all_images(folder):
+def get_all_images(folder, is_authorized = None):
     try:
         all_images = []
         resources = cloudinary.api.resources(
