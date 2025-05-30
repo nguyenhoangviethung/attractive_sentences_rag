@@ -17,6 +17,7 @@ def authenticate():
 
     # Chuyển JSON string thành dict
     creds_info = json.loads(creds_json_str)
+    print(creds_info)
     creds = service_account.Credentials.from_service_account_info(
         creds_info, scopes=SCOPES
     )
