@@ -39,26 +39,23 @@ def add_sentence(data, is_authorized = None):
             "message": "Failure"
         }), 406
 
+def fetch_all_sentences_raw():
+    sentences_cursor = db.sentences.find({}, {"_id": 0})
+    sentences = [SentenceData.from_dict(s).__dict__ for s in sentences_cursor]
+    return sentences
+
 @MW.check_permission
 def get_sentences(is_authorized):
     try:
         if is_authorized:
-            sentences_cursor = db.sentences.find({}, {"_id": 0})
-            sentences = [SentenceData.from_dict(s).__dict__ for s in sentences_cursor]
+            sentences = fetch_all_sentences_raw()
             return jsonify(sentences), 200
         else:
-            return jsonify({
-                "message": "Have not permisson"
-            }), 401
+            return jsonify({"message": "Have not permission"}), 401
     except:
-        return jsonify({
-            "message": "Server Error"
-        }), 500
+        return jsonify({"message": "Server Error"}), 500
 
-from flask import jsonify
-from pymongo.errors import BulkWriteError
-import os
-from utilities.middleware import MiddleWare as MW
+
 
 @MW.check_permission
 def pre_data(is_authorized):

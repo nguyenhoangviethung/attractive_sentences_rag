@@ -12,3 +12,13 @@ __pycache__/
 data/
 
 .vscode/
+
+chatbot/credentials.json
+
+chatbot/token.pickle
+
+chatbot/test.py
+
+thathinh.index
+
+mapping.json
