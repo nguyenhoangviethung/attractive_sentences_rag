@@ -4,20 +4,18 @@ import json
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-from dotenv import load_dotenv
-load_dotenv()
+from config import load_config
 
+CONFIG = load_config()
 SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 
 def authenticate():
-    creds_json_str = os.getenv("GOOGLE_CREDENTIALS_JSON")
+    creds_json_str = CONFIG["GOOGLE_CREDENTIALS_JSON"]
     if not creds_json_str:
         raise RuntimeError("Missing GOOGLE_CREDENTIALS_JSON environment variable")
-
-    # Chuyển JSON string thành dict
     creds_info = json.loads(creds_json_str)
-    print(creds_info)
+
     creds = service_account.Credentials.from_service_account_info(
         creds_info, scopes=SCOPES
     )

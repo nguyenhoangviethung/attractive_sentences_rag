@@ -1,16 +1,15 @@
 from flask import Blueprint, request, jsonify
 from chatbot.build_index import build_index
 from chatbot.chatbot import query_rag,init_chatbot
-import os
-from dotenv import load_dotenv
+from config import load_config
 from chatbot import drive_utils as du
 service = du.authenticate()
 
-load_dotenv()
-FOLDER_ID =os.getenv("FOLDER_ID")
+CONFIG = load_config()
+FOLDER_ID = CONFIG["FOLDER_ID"]
 chatbot_bp = Blueprint("chatbot_bp", __name__,url_prefix = "/chatbot")
 
-mapping, index, embedder = init_chatbot(service = service, folder_id = FOLDER_ID)
+mapping, index, embedder = init_chatbot(service = service, FOLDER_ID = FOLDER_ID)
 
 @chatbot_bp.put('/build_index')
 def build_index_r():

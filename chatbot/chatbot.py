@@ -1,18 +1,17 @@
 import os
 from flask import jsonify
-from dotenv import load_dotenv
 import time
 import json
 import faiss
 from sentence_transformers import SentenceTransformer
 from chatbot import drive_utils as du  
+from config import load_config
 
-load_dotenv()
-folder_id =os.getenv("FOLDER_ID")
-CACHE_EXPIRY_SECONDS = 7 * 24 * 3600  # 1 tuần
-load_dotenv()
+CONFIG = load_config()
 
-folder_id = os.getenv("FOLDER_ID")
+FOLDER_ID = CONFIG["FOLDER_ID"]
+CACHE_EXPIRY_SECONDS = 7 * 24 * 3600  
+
 def is_file_expired(file_path, expiry_seconds=CACHE_EXPIRY_SECONDS):
     if not os.path.exists(file_path):
         return True
@@ -21,36 +20,32 @@ def is_file_expired(file_path, expiry_seconds=CACHE_EXPIRY_SECONDS):
     age = now - file_mtime
     return age > expiry_seconds
 
-def load_mapping_with_cache(service, folder_id, file_name="mapping.json"):
+def load_mapping_with_cache(service, FOLDER_ID, file_name="mapping.json"):
     if is_file_expired(file_name):
         print(f"[Cache] File {file_name} đã cũ hoặc không tồn tại, tải lại từ Drive...")
-        file_id = du.find_file_id(service, folder_id, file_name)
+        file_id = du.find_file_id(service, FOLDER_ID, file_name)
         if not file_id:
-            raise FileNotFoundError(f"Không tìm thấy {file_name} trong folder {folder_id}")
-        du.download_file(service, file_id, file_name)  # ✅ Gọi đúng hàm từ drive_utils
+            raise FileNotFoundError(f"Không tìm thấy {file_name} trong folder {FOLDER_ID}")
+        du.download_file(service, file_id, file_name)  
     else:
         print(f"[Cache] File {file_name} còn mới, dùng cache local.")
     with open(file_name, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-def load_faiss_index_with_cache(service, folder_id, file_name="thathinh.index"):
+def load_faiss_index_with_cache(service, FOLDER_ID, file_name="thathinh.index"):
     if is_file_expired(file_name):
         print(f"[Cache] File {file_name} đã cũ hoặc không tồn tại, tải lại từ Drive...")
-        file_id = du.find_file_id(service, folder_id, file_name)
+        file_id = du.find_file_id(service, FOLDER_ID, file_name)
         if not file_id:
-            raise FileNotFoundError(f"Không tìm thấy {file_name} trong folder {folder_id}")
+            raise FileNotFoundError(f"Không tìm thấy {file_name} trong folder {FOLDER_ID}")
         du.download_file(service, file_id, file_name)
     else:
         print(f"[Cache] File {file_name} còn mới, dùng cache local.")
     return faiss.read_index(file_name)
 
-def init_chatbot(service, folder_id):
-    """
-    Khởi tạo chatbot, tải mapping và index với cache,
-    trả về hàm query_rag dùng để truy vấn chatbot.
-    """
-    mapping = load_mapping_with_cache(service, folder_id)
-    index = load_faiss_index_with_cache(service, folder_id)
+def init_chatbot(service, FOLDER_ID):
+    mapping = load_mapping_with_cache(service, FOLDER_ID)
+    index = load_faiss_index_with_cache(service, FOLDER_ID)
     embedder = SentenceTransformer("keepitreal/vietnamese-sbert")
     return mapping, index, embedder
 

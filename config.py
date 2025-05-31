@@ -17,7 +17,10 @@ def load_config():
         "CLOUD_NAME": os.getenv("CLOUD_NAME"),
         "API_SECRET": os.getenv("API_SECRET"),
         "API_KEY": os.getenv("API_KEY"),
-        "API_ENVIRONMENT_VARIABLE": os.getenv("API_ENVIRONMENT_VARIABLE")
+        "API_ENVIRONMENT_VARIABLE": os.getenv("API_ENVIRONMENT_VARIABLE"),
+        "GOOGLE_CREDENTIALS_JSON": os.getenv("GOOGLE_CREDENTIALS_JSON"),
+        "FOLDER_ID": os.getenv("FOLDER_ID"),
+        "SECRET_ADMIN": os.getenv("SECRET_ADMIN")
     }
     
 

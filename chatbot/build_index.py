@@ -1,15 +1,15 @@
 import json
-import os
-from dotenv import load_dotenv
 from flask import jsonify
 import faiss
 from sentence_transformers import SentenceTransformer
 from service import mongoDB_service as ms
 from chatbot import drive_utils as du           
 from utilities.middleware import MiddleWare as MW
+from config import load_config
+CONFIG = load_config()
 
-load_dotenv()
-FOLDER_ID =os.getenv("FOLDER_ID")
+FOLDER_ID = CONFIG["FOLDER_ID"]
+
 @MW.check_permission
 def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_authorized = None, FOLDER_ID =FOLDER_ID):
     if not is_authorized:
@@ -18,7 +18,6 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
         }), 401
     try:
         data = ms.fetch_all_sentences_raw()
-        print(data)
         model = SentenceTransformer("keepitreal/vietnamese-sbert")
 
         corpus = []
@@ -43,7 +42,6 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
 
         print(f"✅ Đã tạo và lưu local: {mapping_file} và {index_file}")
 
-        # Upload lên Google Drive
         service = du.authenticate()
         du.upload_file_to_folder(service, FOLDER_ID, mapping_file)
         du.upload_file_to_folder(service, FOLDER_ID, index_file)
