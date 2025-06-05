@@ -8,10 +8,14 @@ def index():
 
 @cloudinary_bp.post('/upload-image')
 def upload_image():
+    print(request)
     if request.is_json:
         data = request.get_json()
     else:
         data = request.form.to_dict()
+    if 'image' in request.files:
+        data['img'] = request.files['image']
+    print(data)
     res, status = cs.upload_image(data)
     return res, status
 

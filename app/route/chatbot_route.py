@@ -16,7 +16,7 @@ def build_index_r():
     res, status = build_index(FOLDER_ID = FOLDER_ID)
     return res, status
 
-@chatbot_bp.get('/query_rag')
+@chatbot_bp.post('/query_rag')
 def query():
     if request.is_json:
         data = request.get_json()

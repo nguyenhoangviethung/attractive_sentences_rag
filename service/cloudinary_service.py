@@ -1,5 +1,5 @@
 from flask import jsonify
-import requests
+import requests, os, tempfile
 from utilities.utility import Utilities as Ut
 import cloudinary.uploader as cu
 import cloudinary.api as ca
@@ -19,7 +19,20 @@ def upload_image(data, is_authorized = None):
             folder = "Images_Unsupervise"
         else:
             folder = "Temp"
-        path = data["path"]
+        path = data.get("path", None)
+        print(path)
+        is_temp_file = False  
+
+        if not path:
+            img = data.get("img")
+            if not img or not hasattr(img, "save"):
+                raise ValueError("Không tìm thấy file ảnh hợp lệ.")
+
+            ext = os.path.splitext(img.filename)[-1] or ".jpg"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
+                img.save(temp_file.name)
+                path = temp_file.name
+                is_temp_file = True
         result = cu.upload(
             path,
             folder = folder,
@@ -29,10 +42,12 @@ def upload_image(data, is_authorized = None):
             upload = True
         )
 
+        if is_temp_file and os.path.exists(path):
+            os.remove(path)
         print(result)
         return jsonify({
             "message": "upload image successfully"
-        }), 200
+        }), 202
     except Exception as e:
         print(e)
         return jsonify({
