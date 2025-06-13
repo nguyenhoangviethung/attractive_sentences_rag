@@ -8,7 +8,6 @@ def index():
 
 @cloudinary_bp.post('/upload-image')
 def upload_image():
-    print(request)
     if request.is_json:
         data = request.get_json()
     else:
@@ -19,16 +18,25 @@ def upload_image():
     res, status = cs.upload_image(data)
     return res, status
 
-@cloudinary_bp.get('/images-temp')
+@cloudinary_bp.get('/pending')
 def image_temp():
     res, status = cs.get_temp_images()
     return res, status
 
-@cloudinary_bp.get('/approve')
+@cloudinary_bp.post('/approve')
 def approve():
     if request.is_json:
         data = request.get_json()
     else:
         data = request.form.to_dict()
     res, status = cs.approve_image(data)
+    return res, status
+
+@cloudinary_bp.post('/deny')
+def deny():
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form.to_dict()
+    res, status = cs.delete_temp_image(data)
     return res, status

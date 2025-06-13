@@ -122,7 +122,7 @@ def approve_image(data, is_authorized=None):
 
         upload_response, status = upload_image(data = data)
 
-        if status != 200:
+        if status != 202:
             return jsonify({"message": "Upload failed during approval"}), 500
 
         part = image_url.split("Temp")
@@ -130,7 +130,7 @@ def approve_image(data, is_authorized=None):
         public_id = public_id.split(".")[0]
         public_id = "Temp"+public_id
 
-        print("Destroying:", public_id)
+        # print("Destroying:", public_id)
         cloudinary.uploader.destroy(public_id)
 
         return jsonify({"message": "Image approved and moved"}), 200
@@ -138,3 +138,33 @@ def approve_image(data, is_authorized=None):
         print("Approve failed:", e)
         return jsonify({"message": "Failed to approve image"}), 500
 
+@MW.check_permission
+def delete_temp_image(data, is_authorized=None):
+    if not is_authorized:
+        return jsonify({
+            "message": "Have not permission"
+        }), 401
+    try:
+        image_url = data.get("path")
+        if not image_url:
+            return jsonify({"message": "Missing image URL"}), 400
+
+        part = image_url.split("Temp")
+        if len(part) < 2:
+            return jsonify({"message": "Invalid image URL format"}), 400
+
+        public_id = part[1]
+        public_id = public_id.split(".")[0] 
+        public_id = "Temp" + public_id       
+
+        result = cloudinary.uploader.destroy(public_id)
+        if result.get('result') == 'not found':
+            return jsonify({"message": "Image not found"}), 404
+        elif result.get('result') == 'ok':
+            return jsonify({"message": "Image deleted successfully"}), 200
+        else:
+            return jsonify({"message": "Failed to delete image"}), 500
+
+    except Exception as e:
+        print("Delete temp image failed:", e)
+        return jsonify({"message": "Failed to delete image"}), 500

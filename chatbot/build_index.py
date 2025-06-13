@@ -11,18 +11,15 @@ CONFIG = load_config()
 FOLDER_ID = CONFIG["FOLDER_ID"]
 
 @MW.check_permission
-def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_authorized = None, FOLDER_ID =FOLDER_ID):
+def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_authorized=None, FOLDER_ID=FOLDER_ID):
     if not is_authorized:
-        return jsonify({
-            "message": "Have not permission"
-        }), 401
+        return jsonify({"message": "Have not permission"}), 401
+
     try:
         data = ms.fetch_all_sentences_raw()
         model = SentenceTransformer("keepitreal/vietnamese-sbert")
 
-        corpus = []
-        mapping = []
-
+        corpus, mapping = [], []
         for item in data:
             keywords = ", ".join(item.get("keyword", []))
             full_text = f"{keywords} - {item.get('text', '')}"
@@ -30,7 +27,6 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
             mapping.append(item.get("text", ""))
 
         embeddings = model.encode(corpus, convert_to_numpy=True)
-
         dimension = embeddings.shape[1]
         index = faiss.IndexFlatL2(dimension)
         index.add(embeddings)
@@ -42,16 +38,20 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
 
         print(f"✅ Đã tạo và lưu local: {mapping_file} và {index_file}")
 
+        # Upload lên Google Drive
         service = du.authenticate()
         du.upload_file_to_folder(service, FOLDER_ID, mapping_file)
         du.upload_file_to_folder(service, FOLDER_ID, index_file)
-
         print("☁️ Đã upload lên Google Drive.")
-        return jsonify({
-            "message": "Build index successfully"
-        }), 202
+
+        # Tải lại để xác nhận (hoặc làm mới local bằng bản lưu trên Drive)
+        print("⏬ Đang tải lại từ Google Drive để xác nhận...")
+        du.download_file(service, du.find_file_id(service, FOLDER_ID, mapping_file), mapping_file)
+        du.download_file(service, du.find_file_id(service, FOLDER_ID, index_file), index_file)
+        print("✅ Đã tải lại thành công từ Google Drive.")
+
+        return jsonify({"message": "Build index successfully"}), 202
+
     except Exception as e:
-        print(e)
-        return jsonify({
-            "message": "Build index failure"
-        }), 500
+        print("❌ Lỗi:", e)
+        return jsonify({"message": "Build index failure"}), 500

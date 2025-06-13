@@ -5,7 +5,7 @@ from database.model import SentenceData
 
 def create_app(CONFIG):
     app = Flask(__name__)
-    CORS(app)
+    CORS(app,supports_credentials=True)
     db = connect_db(CONFIG)
     connect_cloudinary(CONFIG)
     from app.route import register_routes

@@ -22,13 +22,30 @@ def get_sentences():
     res, status = ms.get_sentences()
     return res, status
 
-@mongoDB_bp.route('/pre-data')
+@mongoDB_bp.get('/pre-data')
 def pre_data():
     res, status = ms.pre_data()
     return res, status
 
+@mongoDB_bp.get("/pending")
+def pending():
+    res, status = ms.get_temp_sentences()
+    return res, status
+
 @mongoDB_bp.post('/approve')
 def approve():
-    data = request.json
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form.to_dict()
     res, status = ms.approve_text(data)
+    return res, status
+@mongoDB_bp.post('/deny')
+def deny():
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form.to_dict()
+
+    res, status = ms.delete_temp_sentence(data)
     return res, status

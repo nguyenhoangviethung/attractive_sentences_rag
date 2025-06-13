@@ -11,12 +11,12 @@ chatbot_bp = Blueprint("chatbot_bp", __name__,url_prefix = "/chatbot")
 
 mapping, index, embedder = init_chatbot(service = service, FOLDER_ID = FOLDER_ID)
 
-@chatbot_bp.put('/build_index')
+@chatbot_bp.put('/build-index')
 def build_index_r():
     res, status = build_index(FOLDER_ID = FOLDER_ID)
     return res, status
 
-@chatbot_bp.post('/query_rag')
+@chatbot_bp.post('/query-rag')
 def query():
     if request.is_json:
         data = request.get_json()
