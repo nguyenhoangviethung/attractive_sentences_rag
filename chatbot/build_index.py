@@ -1,4 +1,4 @@
-import json
+import json, os
 from flask import jsonify
 import faiss
 from sentence_transformers import SentenceTransformer
@@ -44,11 +44,8 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
         du.upload_file_to_folder(service, FOLDER_ID, index_file)
         print("☁️ Đã upload lên Google Drive.")
 
-        # Tải lại để xác nhận (hoặc làm mới local bằng bản lưu trên Drive)
-        print("⏬ Đang tải lại từ Google Drive để xác nhận...")
-        du.download_file(service, du.find_file_id(service, FOLDER_ID, mapping_file), mapping_file)
-        du.download_file(service, du.find_file_id(service, FOLDER_ID, index_file), index_file)
-        print("✅ Đã tải lại thành công từ Google Drive.")
+        os.remove('mapping.json')
+        os.remove('thathinh.index')
 
         return jsonify({"message": "Build index successfully"}), 202
 
