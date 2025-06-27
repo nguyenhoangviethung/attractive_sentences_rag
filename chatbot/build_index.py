@@ -31,18 +31,14 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
         index = faiss.IndexFlatL2(dimension)
         index.add(embeddings)
 
-        # Lưu local
         faiss.write_index(index, index_file)
         with open(mapping_file, "w", encoding="utf-8") as f:
             json.dump(mapping, f, ensure_ascii=False)
 
-        print(f"✅ Đã tạo và lưu local: {mapping_file} và {index_file}")
-
-        # Upload lên Google Drive
         service = du.authenticate()
         du.upload_file_to_folder(service, FOLDER_ID, mapping_file)
         du.upload_file_to_folder(service, FOLDER_ID, index_file)
-        print("☁️ Đã upload lên Google Drive.")
+
 
         os.remove('mapping.json')
         os.remove('thathinh.index')
@@ -50,5 +46,5 @@ def build_index(mapping_file="mapping.json", index_file="thathinh.index", is_aut
         return jsonify({"message": "Build index successfully"}), 202
 
     except Exception as e:
-        print("❌ Lỗi:", e)
+        print(e)
         return jsonify({"message": "Build index failure"}), 500

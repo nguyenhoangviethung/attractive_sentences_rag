@@ -81,12 +81,10 @@ def pre_data(is_authorized):
         }), 401
 
     try:
-        # Đảm bảo thư mục lưu ảnh local tồn tại
         os.makedirs(CONFIG["FOLDER_PATH_UNSUPERVISE"], exist_ok=True)
         os.makedirs(CONFIG["FOLDER_PATH_SUPERVISE"], exist_ok=True)
         os.makedirs("data", exist_ok=True)
 
-        # Lấy danh sách ảnh từ Cloudinary
         sorted_images_unsupervise = cs.get_all_images(CONFIG["FOLDER_CLOUD_UNSUPERVISE"])
         sorted_images_supervise = cs.get_all_images(CONFIG["FOLDER_CLOUD_SUPERVISE"])
 
@@ -96,13 +94,11 @@ def pre_data(is_authorized):
         print(len(sorted_images_unsupervise))
         print(len(sorted_images_supervise))
 
-        # Tải ảnh về local
         for i, item in enumerate(sorted_images_supervise[i2:]):
             cs.download_image(item["secure_url"], f'{CONFIG["FOLDER_PATH_SUPERVISE"]}/img{i+i2+1}.jpg')
         for i, item in enumerate(sorted_images_unsupervise[i1:]):
             cs.download_image(item["secure_url"], f'{CONFIG["FOLDER_PATH_UNSUPERVISE"]}/img{i+i1+1}.jpg')
 
-        # Xử lý ảnh
         unsupervised, index_1 = process_unsupervised_images(
             config=CONFIG,
             model_name='gemini-2.0-flash',
